@@ -10,6 +10,13 @@ import {
 import useResolvedElement from "./utils/useResolvedElement";
 import extractSize from "./utils/extractSize";
 
+declare global {
+  // eslint-disable-next-line no-unused-vars
+  interface Window {
+    ResizeObserver: typeof ResizeObserver;
+  }
+}
+
 export type ObservedSize = {
   width: number | undefined;
   height: number | undefined;
@@ -38,6 +45,7 @@ export type RoundingFunction = (n: number) => number;
 
 function useResizeObserver<T extends Element>(
   opts: {
+    extenalWindow?: Window | null | undefined;
     ref?: RefObject<T> | T | null | undefined;
     onResize?: ResizeHandler;
     box?: ResizeObserverBoxOptions;
@@ -51,6 +59,8 @@ function useResizeObserver<T extends Element>(
   const onResizeRef = useRef<ResizeHandler | undefined>(undefined);
   onResizeRef.current = onResize;
   const round = opts.round || Math.round;
+
+  const myWindow = opts.extenalWindow ?? window;
 
   // Using a single instance throughout the hook's lifetime
   const resizeObserverRef = useRef<{
@@ -105,7 +115,7 @@ function useResizeObserver<T extends Element>(
           resizeObserverRef.current = {
             box: opts.box,
             round,
-            instance: new ResizeObserver((entries) => {
+            instance: new myWindow.ResizeObserver((entries) => {
               const entry = entries[0];
 
               const boxProp =
