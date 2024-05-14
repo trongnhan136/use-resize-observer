@@ -167,7 +167,10 @@ function useResizeObserver(opts) {
       function (element) {
         // We only use a single Resize Observer instance, and we're instantiating it on demand, only once there's something to observe.
         // This instance is also recreated when the `box` option changes, so that a new observation is fired if there was a previously observed element with a different box option.
-        if (ResizeObserverClassObj) {
+        if (
+          ResizeObserverClassObj != null &&
+          ResizeObserverClassObj != undefined
+        ) {
           var _resizeObserverRef$cu;
 
           if (
