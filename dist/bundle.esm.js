@@ -125,19 +125,15 @@ function useResizeObserver(opts) {
   var round = opts.round || Math.round;
   var ResizeObserverClassObj = useMemo(
     function () {
-      var _opts$extenalWindow;
+      if (
+        opts.extenalWindow &&
+        typeof opts.extenalWindow.ResizeObserver !== "undefined"
+      ) {
+        console.log("user external window resize observer");
+        return opts.extenalWindow.ResizeObserver;
+      }
 
-      var w =
-        (_opts$extenalWindow = opts.extenalWindow) != null
-          ? _opts$extenalWindow
-          : window;
-      console.log(
-        'typeof w.ResizeObserver === "undefined"',
-        typeof w.ResizeObserver === "undefined"
-      );
-      return typeof w.ResizeObserver === "undefined"
-        ? ResizeObserver
-        : w.ResizeObserver;
+      return ResizeObserver;
     },
     [opts.extenalWindow]
   ); // Using a single instance throughout the hook's lifetime
@@ -170,6 +166,8 @@ function useResizeObserver(opts) {
   var refCallback = useResolvedElement(
     useCallback(
       function (element) {
+        var _resizeObserverRef$cu;
+
         // We only use a single Resize Observer instance, and we're instantiating it on demand, only once there's something to observe.
         // This instance is also recreated when the `box` option changes, so that a new observation is fired if there was a previously observed element with a different box option.
         if (
@@ -218,12 +216,19 @@ function useResizeObserver(opts) {
           };
         }
 
-        resizeObserverRef.current.instance.observe(element, {
-          box: opts.box,
-        });
+        (_resizeObserverRef$cu = resizeObserverRef.current.instance) == null
+          ? void 0
+          : _resizeObserverRef$cu.observe(element, {
+              box: opts.box,
+            });
         return function () {
           if (resizeObserverRef.current) {
-            resizeObserverRef.current.instance.unobserve(element);
+            var _resizeObserverRef$cu2;
+
+            (_resizeObserverRef$cu2 = resizeObserverRef.current.instance) ==
+            null
+              ? void 0
+              : _resizeObserverRef$cu2.unobserve(element);
           }
         };
       },
