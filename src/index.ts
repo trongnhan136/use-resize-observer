@@ -60,7 +60,16 @@ function useResizeObserver<T extends Element>(
   onResizeRef.current = onResize;
   const round = opts.round || Math.round;
 
-  const myWindow = opts.extenalWindow ?? window;
+  const ResizeObserverClassObj = useMemo(() => {
+    const w = opts.extenalWindow ?? window;
+    console.log(
+      'typeof w.ResizeObserver === "undefined"',
+      typeof w.ResizeObserver === "undefined"
+    );
+    return typeof w.ResizeObserver === "undefined"
+      ? ResizeObserver
+      : w.ResizeObserver;
+  }, [opts.extenalWindow]);
 
   // Using a single instance throughout the hook's lifetime
   const resizeObserverRef = useRef<{
@@ -115,7 +124,7 @@ function useResizeObserver<T extends Element>(
           resizeObserverRef.current = {
             box: opts.box,
             round,
-            instance: new myWindow.ResizeObserver((entries) => {
+            instance: new ResizeObserverClassObj((entries) => {
               const entry = entries[0];
 
               const boxProp =
@@ -160,7 +169,7 @@ function useResizeObserver<T extends Element>(
           }
         };
       },
-      [opts.box, round]
+      [opts.box, round, ResizeObserverClassObj]
     ),
     opts.ref
   );

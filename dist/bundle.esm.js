@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 
 // This could've been more streamlined with internal state instead of abusing
 // refs to such extent, but then composing hooks and components could not opt out of unnecessary renders.
@@ -112,8 +112,6 @@ function extractSize(entry, boxProp, sizeType) {
 }
 
 function useResizeObserver(opts) {
-  var _opts$extenalWindow;
-
   if (opts === void 0) {
     opts = {};
   }
@@ -125,10 +123,24 @@ function useResizeObserver(opts) {
   var onResizeRef = useRef(undefined);
   onResizeRef.current = onResize;
   var round = opts.round || Math.round;
-  var myWindow =
-    (_opts$extenalWindow = opts.extenalWindow) != null
-      ? _opts$extenalWindow
-      : window; // Using a single instance throughout the hook's lifetime
+  var ResizeObserverClassObj = useMemo(
+    function () {
+      var _opts$extenalWindow;
+
+      var w =
+        (_opts$extenalWindow = opts.extenalWindow) != null
+          ? _opts$extenalWindow
+          : window;
+      console.log(
+        'typeof w.ResizeObserver === "undefined"',
+        typeof w.ResizeObserver === "undefined"
+      );
+      return typeof w.ResizeObserver === "undefined"
+        ? ResizeObserver
+        : w.ResizeObserver;
+    },
+    [opts.extenalWindow]
+  ); // Using a single instance throughout the hook's lifetime
 
   var resizeObserverRef = useRef();
 
@@ -168,7 +180,7 @@ function useResizeObserver(opts) {
           resizeObserverRef.current = {
             box: opts.box,
             round: round,
-            instance: new myWindow.ResizeObserver(function (entries) {
+            instance: new ResizeObserverClassObj(function (entries) {
               var entry = entries[0];
               var boxProp =
                 opts.box === "border-box"
@@ -215,7 +227,7 @@ function useResizeObserver(opts) {
           }
         };
       },
-      [opts.box, round]
+      [opts.box, round, ResizeObserverClassObj]
     ),
     opts.ref
   );
