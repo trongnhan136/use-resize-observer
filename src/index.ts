@@ -65,7 +65,6 @@ function useResizeObserver<T extends Element>(
       opts.extenalWindow &&
       typeof opts.extenalWindow.ResizeObserver !== "undefined"
     ) {
-      console.log("user external window resize observer");
       return opts.extenalWindow.ResizeObserver;
     }
     return ResizeObserver;
@@ -116,52 +115,58 @@ function useResizeObserver<T extends Element>(
       (element) => {
         // We only use a single Resize Observer instance, and we're instantiating it on demand, only once there's something to observe.
         // This instance is also recreated when the `box` option changes, so that a new observation is fired if there was a previously observed element with a different box option.
-        if (
-          !resizeObserverRef.current ||
-          resizeObserverRef.current.box !== opts.box ||
-          resizeObserverRef.current.round !== round
-        ) {
-          resizeObserverRef.current = {
-            box: opts.box,
-            round,
-            instance: new ResizeObserverClassObj((entries) => {
-              const entry = entries[0];
+        if (ResizeObserverClassObj) {
+          if (
+            !resizeObserverRef.current ||
+            resizeObserverRef.current.box !== opts.box ||
+            resizeObserverRef.current.round !== round
+          ) {
+            resizeObserverRef.current = {
+              box: opts.box,
+              round,
+              instance: new ResizeObserverClassObj((entries) => {
+                const entry = entries[0];
 
-              const boxProp =
-                opts.box === "border-box"
-                  ? "borderBoxSize"
-                  : opts.box === "device-pixel-content-box"
-                  ? "devicePixelContentBoxSize"
-                  : "contentBoxSize";
+                const boxProp =
+                  opts.box === "border-box"
+                    ? "borderBoxSize"
+                    : opts.box === "device-pixel-content-box"
+                    ? "devicePixelContentBoxSize"
+                    : "contentBoxSize";
 
-              const reportedWidth = extractSize(entry, boxProp, "inlineSize");
-              const reportedHeight = extractSize(entry, boxProp, "blockSize");
+                const reportedWidth = extractSize(entry, boxProp, "inlineSize");
+                const reportedHeight = extractSize(entry, boxProp, "blockSize");
 
-              const newWidth = reportedWidth ? round(reportedWidth) : undefined;
-              const newHeight = reportedHeight
-                ? round(reportedHeight)
-                : undefined;
+                const newWidth = reportedWidth
+                  ? round(reportedWidth)
+                  : undefined;
+                const newHeight = reportedHeight
+                  ? round(reportedHeight)
+                  : undefined;
 
-              if (
-                previous.current.width !== newWidth ||
-                previous.current.height !== newHeight
-              ) {
-                const newSize = { width: newWidth, height: newHeight };
-                previous.current.width = newWidth;
-                previous.current.height = newHeight;
-                if (onResizeRef.current) {
-                  onResizeRef.current(newSize);
-                } else {
-                  if (!didUnmount.current) {
-                    setSize(newSize);
+                if (
+                  previous.current.width !== newWidth ||
+                  previous.current.height !== newHeight
+                ) {
+                  const newSize = { width: newWidth, height: newHeight };
+                  previous.current.width = newWidth;
+                  previous.current.height = newHeight;
+                  if (onResizeRef.current) {
+                    onResizeRef.current(newSize);
+                  } else {
+                    if (!didUnmount.current) {
+                      setSize(newSize);
+                    }
                   }
                 }
-              }
-            }),
-          };
-        }
+              }),
+            };
+          }
 
-        resizeObserverRef.current.instance?.observe(element, { box: opts.box });
+          resizeObserverRef.current.instance?.observe(element, {
+            box: opts.box,
+          });
+        }
 
         return () => {
           if (resizeObserverRef.current) {

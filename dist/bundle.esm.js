@@ -129,7 +129,6 @@ function useResizeObserver(opts) {
         opts.extenalWindow &&
         typeof opts.extenalWindow.ResizeObserver !== "undefined"
       ) {
-        console.log("user external window resize observer");
         return opts.extenalWindow.ResizeObserver;
       }
 
@@ -166,61 +165,64 @@ function useResizeObserver(opts) {
   var refCallback = useResolvedElement(
     useCallback(
       function (element) {
-        var _resizeObserverRef$cu;
-
         // We only use a single Resize Observer instance, and we're instantiating it on demand, only once there's something to observe.
         // This instance is also recreated when the `box` option changes, so that a new observation is fired if there was a previously observed element with a different box option.
-        if (
-          !resizeObserverRef.current ||
-          resizeObserverRef.current.box !== opts.box ||
-          resizeObserverRef.current.round !== round
-        ) {
-          resizeObserverRef.current = {
-            box: opts.box,
-            round: round,
-            instance: new ResizeObserverClassObj(function (entries) {
-              var entry = entries[0];
-              var boxProp =
-                opts.box === "border-box"
-                  ? "borderBoxSize"
-                  : opts.box === "device-pixel-content-box"
-                  ? "devicePixelContentBoxSize"
-                  : "contentBoxSize";
-              var reportedWidth = extractSize(entry, boxProp, "inlineSize");
-              var reportedHeight = extractSize(entry, boxProp, "blockSize");
-              var newWidth = reportedWidth ? round(reportedWidth) : undefined;
-              var newHeight = reportedHeight
-                ? round(reportedHeight)
-                : undefined;
+        if (ResizeObserverClassObj) {
+          var _resizeObserverRef$cu;
 
-              if (
-                previous.current.width !== newWidth ||
-                previous.current.height !== newHeight
-              ) {
-                var newSize = {
-                  width: newWidth,
-                  height: newHeight,
-                };
-                previous.current.width = newWidth;
-                previous.current.height = newHeight;
+          if (
+            !resizeObserverRef.current ||
+            resizeObserverRef.current.box !== opts.box ||
+            resizeObserverRef.current.round !== round
+          ) {
+            resizeObserverRef.current = {
+              box: opts.box,
+              round: round,
+              instance: new ResizeObserverClassObj(function (entries) {
+                var entry = entries[0];
+                var boxProp =
+                  opts.box === "border-box"
+                    ? "borderBoxSize"
+                    : opts.box === "device-pixel-content-box"
+                    ? "devicePixelContentBoxSize"
+                    : "contentBoxSize";
+                var reportedWidth = extractSize(entry, boxProp, "inlineSize");
+                var reportedHeight = extractSize(entry, boxProp, "blockSize");
+                var newWidth = reportedWidth ? round(reportedWidth) : undefined;
+                var newHeight = reportedHeight
+                  ? round(reportedHeight)
+                  : undefined;
 
-                if (onResizeRef.current) {
-                  onResizeRef.current(newSize);
-                } else {
-                  if (!didUnmount.current) {
-                    setSize(newSize);
+                if (
+                  previous.current.width !== newWidth ||
+                  previous.current.height !== newHeight
+                ) {
+                  var newSize = {
+                    width: newWidth,
+                    height: newHeight,
+                  };
+                  previous.current.width = newWidth;
+                  previous.current.height = newHeight;
+
+                  if (onResizeRef.current) {
+                    onResizeRef.current(newSize);
+                  } else {
+                    if (!didUnmount.current) {
+                      setSize(newSize);
+                    }
                   }
                 }
-              }
-            }),
-          };
+              }),
+            };
+          }
+
+          (_resizeObserverRef$cu = resizeObserverRef.current.instance) == null
+            ? void 0
+            : _resizeObserverRef$cu.observe(element, {
+                box: opts.box,
+              });
         }
 
-        (_resizeObserverRef$cu = resizeObserverRef.current.instance) == null
-          ? void 0
-          : _resizeObserverRef$cu.observe(element, {
-              box: opts.box,
-            });
         return function () {
           if (resizeObserverRef.current) {
             var _resizeObserverRef$cu2;
